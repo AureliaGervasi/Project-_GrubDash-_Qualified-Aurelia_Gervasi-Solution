@@ -64,14 +64,14 @@ function read(req, res, next) {
 
 function orderExists(req, res, next) {
     const { orderId } = req.params;
-    const foundOrder = orders.find(order => order.id === orderId);
+    const foundOrder = orders.find((order) => order.id === orderId);
     if (foundOrder) {
       res.locals.order = foundOrder;
       return next();
     }
     next({
       status: 404,
-      message: `Order id not found: ${orderId}`,
+      message: `Order id does not exist: ${orderId}`,
     });
 };
 
@@ -113,6 +113,15 @@ function validateOrderStatus(req, res, next) {
 	next();
 }
 
+//destroy DELETE orders/:orderId
+function destroy(req, res) {
+    const index = orders.indexOf(res.locals.order);
+    // `splice()` returns an array of the deleted elements, even if it is one element
+    orders.splice(index, 1);
+
+    res.sendStatus(204);
+}
+
 function validateDelete(req, res, next) {
     if(res.locals.order.status !== "pending") {
         return next({
@@ -124,27 +133,10 @@ function validateDelete(req, res, next) {
     next();
 }
 
-//destroy DELETE orders/:orderId
-function destroy(req, res) {
-    const index = orders.indexOf(res.locals.order);
-    // `splice()` returns an array of the deleted elements, even if it is one element
-    orders.splice(index, 1);
-
-    res.sendStatus(204);
-}
-
 module.exports = {
     list,
-    create: [
-        validateOrderProperties,
-        create
-    ],
+    create: [validateOrderProperties, create],
     read: [orderExists, read],
-    update: [
-        validateOrderProperties,
-        orderExists,
-        validateOrderStatus,
-        update
-    ],
+    update: [validateOrderProperties, orderExists, validateOrderStatus, update],
     delete: [orderExists, validateDelete, destroy],
 }
